@@ -1,4 +1,4 @@
-package concurrent
+package multiwriter
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-func (s *concurrentWriterTestSuite) TestWrite() {
+func (s *multiWriterTestSuite) TestWrite() {
 	sample := func() []byte {
 		out := make([]byte, 1024)
 		for i := range out {
@@ -52,10 +52,10 @@ func (s *concurrentWriterTestSuite) TestWrite() {
 // ========================================================================
 // Test suite setup
 // ========================================================================
-type concurrentWriterTestSuite struct {
+type multiWriterTestSuite struct {
 	suite.Suite
 }
 
-func TestConcurrentWriterTestSuite(t *testing.T) {
-	suite.Run(t, &concurrentWriterTestSuite{})
+func TestMultiWriterTestSuite(t *testing.T) {
+	suite.Run(t, &multiWriterTestSuite{})
 }
