@@ -18,6 +18,7 @@ type Random interface {
 	Float64() float64
 	Float32() float32
 	Perm(n int) []int
+	Read([]byte) (int, error)
 }
 
 func init() {
