@@ -32,7 +32,9 @@ func DownloadFile(ctx context.Context, url, destination string, opts ...HTTPOpti
 	if err != nil {
 		return errors.Wrap(err, "error performing HTTP request")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 		return errors.Errorf("unexpected status code: 200 or 206 expected while %d received", resp.StatusCode)

@@ -32,7 +32,9 @@ func (s *testSuite) TestResponse() {
 
 	data, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err)
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	s.Require().JSONEq(`{"status":"ok"}`, string(data))
 }

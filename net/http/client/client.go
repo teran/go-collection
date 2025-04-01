@@ -152,12 +152,14 @@ func (c Client) Do(ctx context.Context, body io.Reader) (*http.Response, error) 
 	return c.cli.Do(req)
 }
 
-func (c Client) DoJSON(ctx context.Context, body io.Reader, model, errorModel any) (int, error) {
+func (c Client) DoJSON(ctx context.Context, body io.Reader, model, errorModel any) (code int, err error) {
 	resp, err := c.Do(ctx, body)
 	if err != nil {
 		return 0, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	log.WithFields(log.Fields{
 		"status":  resp.StatusCode,
