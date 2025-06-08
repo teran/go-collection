@@ -1,0 +1,41 @@
+chart:
+  repository: testimage
+  tag: 1234
+  pullPolicy: IfNotPresent
+  replicas: 2
+  env:
+    - name: LOG_LEVEL
+      value: "trace"
+    - name: ANOTHER_VAR
+      value: anotherValue
+  ingress:
+    annotations:
+      test: value
+    className: nginx
+    hosts:
+      - host: some-host.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+        - some-host.example.com
+        secretName: some-host.example.com
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  volumeMounts:
+    - name: ca-certs
+      mountPath: /etc/ssl/certs/
+      readOnly: true
+  volumes:
+    - name: ca-certs
+      secret:
+        secretName: ca-certs
+        items:
+          - key: ca.crt
+            path: ca.crt

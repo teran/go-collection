@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chart
+  labels:
+    app.kubernetes.io/app: k8s-app-label
+    app.kubernetes.io/component: k8s-component-label
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  replicas: {{ .Values.chart.replicas }}
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/app: k8s-app-label
+      app.kubernetes.io/component: k8s-component-label
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app: chart
+        app.kubernetes.io/component: chart
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/app
+                    operator: In
+                    values:
+                      - k8s-app-label
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - k8s-component-label
+              topologyKey: "kubernetes.io/hostname"
+      terminationGracePeriodSeconds: 30
+      automountServiceAccountToken: false
+      containers:
+        - name: testapp
+          image: "{{ .Values.chart.repository }}/app:{{ .Values.chart.tag }}"
+          imagePullPolicy: {{ .Values.chart.pullPolicy }}
+          {{- with .Values.chart.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.chart.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: grpc
+              containerPort: 5555
+              protocol: TCP
+            - name: metrics
+              containerPort: 8081
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /healthz/startup
+              port: metrics
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz/readiness
+              port: metrics
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz/liveness
+              port: metrics
+            timeoutSeconds: 5
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          {{- with .Values.chart.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.chart.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.chart.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
