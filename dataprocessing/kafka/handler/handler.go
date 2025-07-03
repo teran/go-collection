@@ -45,33 +45,40 @@ func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 	}).Trace("ConsumeClaim() called")
 
 	for {
-		select {
-		case <-session.Context().Done():
-			return session.Context().Err()
-		case message, ok := <-claim.Messages():
-			if !ok {
-				log.Warn("message channel was closed")
-				return nil
-			}
+		if err := func() error {
+			defer session.Commit()
 
-			log.WithFields(log.Fields{
-				"topic":     message.Topic,
-				"timestamp": message.Timestamp.Format(time.RFC3339),
-				"offset":    message.Offset,
-				"partition": message.Partition,
-				"length":    len(message.Value),
-			}).Trace("message consumed. Running handler ...")
-
-			if err := h.handler.Handle(session.Context(), message); err != nil {
-				if errors.Is(errors.Cause(err), ErrMarkAcked) {
-					session.MarkMessage(message, "")
+			select {
+			case <-session.Context().Done():
+				return session.Context().Err()
+			case message, ok := <-claim.Messages():
+				if !ok {
+					log.Warn("message channel was closed")
+					return nil
 				}
 
-				return errors.Wrap(err, "error running handler")
-			}
-			log.Trace("handler completed without an error. Marking message ...")
+				log.WithFields(log.Fields{
+					"topic":     message.Topic,
+					"timestamp": message.Timestamp.Format(time.RFC3339),
+					"offset":    message.Offset,
+					"partition": message.Partition,
+					"length":    len(message.Value),
+				}).Trace("message consumed. Running handler ...")
 
-			session.MarkMessage(message, "")
+				if err := h.handler.Handle(session.Context(), message); err != nil {
+					if errors.Is(errors.Cause(err), ErrMarkAcked) {
+						session.MarkMessage(message, "")
+					}
+
+					return errors.Wrap(err, "error running handler")
+				}
+				log.Trace("handler completed without an error. Marking message ...")
+
+				session.MarkMessage(message, "")
+				return nil
+			}
+		}(); err != nil {
+			return err
 		}
 	}
 }
