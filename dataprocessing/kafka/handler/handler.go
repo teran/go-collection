@@ -9,7 +9,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var _ sarama.ConsumerGroupHandler = (*consumerGroupHandler)(nil)
+var (
+	_ sarama.ConsumerGroupHandler = (*consumerGroupHandler)(nil)
+
+	ErrMarkAcked = errors.New("skip message")
+)
 
 type Handler interface {
 	Handle(ctx context.Context, msg *sarama.ConsumerMessage) error
@@ -59,7 +63,10 @@ func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 			}).Trace("message consumed. Running handler ...")
 
 			if err := h.handler.Handle(session.Context(), message); err != nil {
-				session.MarkMessage(message, "")
+				if errors.Is(errors.Cause(err), ErrMarkAcked) {
+					session.MarkMessage(message, "")
+				}
+
 				return errors.Wrap(err, "error running handler")
 			}
 			log.Trace("handler completed without an error. Marking message ...")
