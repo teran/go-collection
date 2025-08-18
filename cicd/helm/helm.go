@@ -116,7 +116,7 @@ func (h *helm) Resources() (Resources, error) {
 			}
 			return nil, errors.Wrap(err, "error decoding YAML document")
 		}
-		if document == nil {
+		if document.IsEmpty() {
 			continue
 		}
 		documents = append(documents, document)
