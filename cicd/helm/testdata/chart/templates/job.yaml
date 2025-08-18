@@ -1,0 +1,35 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job
+  labels:
+    app.kubernetes.io/app: k8s-app-label
+    app.kubernetes.io/component: k8s-component-label
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  template:
+    metadata:
+      name: job
+      labels:
+        app.kubernetes.io/app: k8s-app-label
+        app.kubernetes.io/component: k8s-component-label
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: testjob
+          image: "{{ .Values.chart.repository }}/job:{{ .Values.chart.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_LEVEL
+              value: "trace"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      restartPolicy: OnFailure

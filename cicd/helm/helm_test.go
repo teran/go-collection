@@ -28,7 +28,7 @@ func (s *helmTestSuite) TestRender() {
 func (s *helmTestSuite) TestResources() {
 	resources, err := s.helm.Resources()
 	s.Require().NoError(err)
-	s.Require().Len(resources, 3)
+	s.Require().Len(resources, 4)
 }
 
 func (s *helmTestSuite) TestFilterByKind() {
