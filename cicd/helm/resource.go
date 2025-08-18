@@ -41,3 +41,7 @@ func (r Resource) GetStruct(key string, in any) error {
 		"error unmarshaling the raw data",
 	)
 }
+
+func (r Resource) IsEmpty() bool {
+	return len(r) == 0
+}
