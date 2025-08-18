@@ -50,7 +50,7 @@ func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 
 			select {
 			case <-session.Context().Done():
-				return session.Context().Err()
+				return errors.Wrap(session.Context().Err(), "error received from context")
 			case message, ok := <-claim.Messages():
 				if !ok {
 					log.Warn("message channel was closed")
@@ -63,22 +63,27 @@ func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 					"offset":    message.Offset,
 					"partition": message.Partition,
 					"length":    len(message.Value),
-				}).Trace("message consumed. Running handler ...")
+				}).Debug("message consumed. Running handler ...")
 
 				if err := h.handler.Handle(session.Context(), message); err != nil {
 					if errors.Is(errors.Cause(err), ErrMarkAcked) {
+						log.WithError(err).WithFields(log.Fields{
+							"component": "ConsumerGroupHandler",
+						}).Debug("handler returned ErrMarkAcked. Marking message ...")
 						session.MarkMessage(message, "")
 					}
 
 					return errors.Wrap(err, "error running handler")
 				}
-				log.Trace("handler completed without an error. Marking message ...")
+				log.WithFields(log.Fields{
+					"component": "ConsumerGroupHandler",
+				}).Debug("handler completed without an error. Marking message ...")
 
 				session.MarkMessage(message, "")
 				return nil
 			}
 		}(); err != nil {
-			return err
+			return errors.Wrap(err, "error running consumer group handler")
 		}
 	}
 }

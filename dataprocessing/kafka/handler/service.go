@@ -42,8 +42,9 @@ func (s *service) Run(ctx context.Context) error {
 
 		if err := s.cg.Consume(ctx, s.topics, cgh); err != nil {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
-				return err
+				return errors.Wrap(err, "consumer group closed")
 			}
+			return errors.Wrap(err, "error consuming messages")
 		}
 
 		if ctx.Err() != nil {
