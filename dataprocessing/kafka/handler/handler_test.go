@@ -215,7 +215,7 @@ func (s *handlerTestSuite) SetupTest() {
 
 func (s *handlerTestSuite) TearDownTest() {
 	s.cancelFn()
-	s.kafka.Close(s.T().Context())
+	_ = s.kafka.Close(s.T().Context())
 }
 
 func TestHandlerTestSuite(t *testing.T) {
