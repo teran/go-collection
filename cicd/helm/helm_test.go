@@ -14,21 +14,27 @@ func init() {
 const chartPath = "testdata/chart"
 
 func (s *helmTestSuite) TestHelmVerify() {
-	out, err := s.helm.Render()
+	resources, hooks, err := s.helm.Render()
 	s.Require().NoError(err)
-	s.Require().NotEmpty(out)
+	s.Require().NotEmpty(resources)
+	s.Require().NotEmpty(hooks)
 }
 
 func (s *helmTestSuite) TestRender() {
-	resources, err := s.helm.Render()
+	resources, hooks, err := s.helm.Render()
 	s.Require().NoError(err)
 	s.Require().NotEmpty(resources)
+	s.Require().NotEmpty(hooks)
 }
 
 func (s *helmTestSuite) TestResources() {
 	resources, err := s.helm.Resources()
 	s.Require().NoError(err)
 	s.Require().Len(resources, 4)
+	s.Require().Len(resources.FilterByKind("deployment"), 1)
+	s.Require().Len(resources.FilterByKind("service"), 1)
+	s.Require().Len(resources.FilterByKind("ingress"), 1)
+	s.Require().Len(resources.FilterByKind("job"), 1)
 }
 
 func (s *helmTestSuite) TestFilterByKind() {
