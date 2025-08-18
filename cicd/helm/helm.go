@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -19,8 +21,8 @@ var (
 )
 
 type Helm interface {
-	Render() ([]byte, error)
-	MustRender() []byte
+	Render() (resources []byte, hooks []byte, err error)
+	MustRender() (resources []byte, hooks []byte)
 	Resources() (Resources, error)
 	MustResources() Resources
 }
@@ -55,17 +57,17 @@ func New(chart string, opts ...Option) Helm {
 	return h
 }
 
-func (h *helm) Render() ([]byte, error) {
+func (h *helm) Render() ([]byte, []byte, error) {
 	settings := cli.New()
-	actionConfig := new(action.Configuration)
+	actionConfig := &action.Configuration{}
 
-	if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), nil); err != nil {
-		return nil, errors.Wrap(err, "error initializing helm")
+	if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), debugLog); err != nil {
+		return nil, nil, errors.Wrap(err, "error initializing helm")
 	}
 
 	chart, err := loader.Load(h.chartPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "error loading chart")
+		return nil, nil, errors.Wrap(err, "error loading chart")
 	}
 
 	client := action.NewInstall(actionConfig)
@@ -73,6 +75,8 @@ func (h *helm) Render() ([]byte, error) {
 	client.ReleaseName = "my-release"
 	client.Namespace = settings.Namespace()
 	client.ClientOnly = true
+	client.Verify = true
+	client.DisableHooks = false
 
 	valueOpts := &values.Options{
 		Values:     h.values,
@@ -81,31 +85,39 @@ func (h *helm) Render() ([]byte, error) {
 
 	vals, err := valueOpts.MergeValues(nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "error merging values")
+		return nil, nil, errors.Wrap(err, "error merging values")
 	}
 
 	rel, err := client.Run(chart, vals)
 	if err != nil {
-		return nil, errors.Wrap(err, "error rendering")
+		return nil, nil, errors.Wrap(err, "error rendering")
 	}
 
-	return []byte(rel.Manifest), nil
+	var hooks []string
+	for _, hook := range rel.Hooks {
+		hooks = append(hooks, hook.Manifest)
+	}
+
+	return []byte(rel.Manifest), []byte(strings.Join(hooks, "---")), nil
 }
 
-func (h *helm) MustRender() []byte {
-	out, err := h.Render()
+func (h *helm) MustRender() (resources []byte, hooks []byte) {
+	resources, hooks, err := h.Render()
 	if err != nil {
 		panic(err)
 	}
 
-	return out
+	return resources, hooks
 }
 
 func (h *helm) Resources() (Resources, error) {
-	data, err := h.Render()
+	resources, hooks, err := h.Render()
 	if err != nil {
 		return nil, errors.Wrap(err, "error rendering Helm chart")
 	}
+
+	data := append(resources, hooks...)
+
 	documents := Resources{}
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	for {
@@ -131,4 +143,8 @@ func (h *helm) MustResources() Resources {
 		panic(err)
 	}
 	return rs
+}
+
+func debugLog(msg string, args ...interface{}) {
+	log.Debugf(msg, args...)
 }
