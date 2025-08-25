@@ -13,7 +13,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	golang.org/x/sync v0.16.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.18.5
+	helm.sh/helm/v3 v3.18.6
 )
 
 require (
