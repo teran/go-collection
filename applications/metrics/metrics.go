@@ -63,9 +63,9 @@ func check(c echo.Context, fn func() error) error {
 	}
 
 	if err := fn(); err != nil {
-		return c.JSON(http.StatusServiceUnavailable, echo.Map{
+		return echo.NewHTTPError(http.StatusServiceUnavailable, echo.Map{
 			"status": "failed", "error": err.Error(),
-		})
+		}).SetInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"status": "ok"})
