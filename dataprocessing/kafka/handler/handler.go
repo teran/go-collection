@@ -73,6 +73,7 @@ func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 						session.MarkMessage(message, "")
 					}
 
+					log.WithError(err).Error("error running handler. Not marking message")
 					return errors.Wrap(err, "error running handler")
 				}
 				log.WithFields(log.Fields{
@@ -83,6 +84,7 @@ func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 				return nil
 			}
 		}(); err != nil {
+			log.WithError(err).Error("error running consumer group handler")
 			return errors.Wrap(err, "error running consumer group handler")
 		}
 	}
