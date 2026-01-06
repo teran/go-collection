@@ -129,7 +129,7 @@ func TestAll(t *testing.T) {
 			r := require.New(t)
 
 			e := echo.New()
-			e.Use(middleware.Logger())
+			e.Use(middleware.RequestLogger())
 			e.Use(middleware.Recover())
 
 			appMetrics := New(tc.livenessProbeFn, tc.readinessProbeFn, tc.startupProbeFn)
@@ -152,7 +152,7 @@ func TestMetrics(t *testing.T) {
 	r := require.New(t)
 
 	e := echo.New()
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 
 	appMetrics := New(nil, nil, nil)

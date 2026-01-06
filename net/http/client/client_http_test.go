@@ -131,7 +131,7 @@ func (s *testSuite) SetupTest() {
 	s.handlers = &handlers{}
 
 	e := echo.New()
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.GET("/json", s.handlers.JSONResponder)
 	e.GET("/custom", s.handlers.CustomResponder)
 	e.GET("/headers", s.handlers.HeadersResponder)
