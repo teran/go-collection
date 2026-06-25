@@ -32,6 +32,7 @@ func (s *handlerTestSuite) TestRoundtrip() {
 
 	handlerMock := &testHandler{
 		cancelFn: s.cancelFn,
+		expected: 1,
 	}
 	handlerMock.On("Handle", testTopicName, []byte("test")).Return(nil).Once()
 	defer handlerMock.AssertExpectations(s.T())
@@ -87,6 +88,7 @@ func (s *handlerTestSuite) TestRoundtrip_ServiceError() {
 
 	handlerMock := &testHandler{
 		cancelFn: s.cancelFn,
+		expected: 2,
 	}
 	handlerMock.On("Handle", testTopicName, []byte("test #1")).Return(errors.New("blah")).Once()
 	handlerMock.On("Handle", testTopicName, []byte("test #1")).Return(nil).Once()
@@ -146,6 +148,7 @@ func (s *handlerTestSuite) TestRoundtrip_ServiceErrorMarkAcked() {
 
 	handlerMock := &testHandler{
 		cancelFn: s.cancelFn,
+		expected: 1,
 	}
 	handlerMock.On("Handle", testTopicName, []byte("test #1")).Return(ErrMarkAcked).Once()
 	handlerMock.On("Handle", testTopicName, []byte("test #2")).Return(nil).Once()
@@ -241,13 +244,17 @@ type testHandler struct {
 	mock.Mock
 
 	cancelFn context.CancelFunc
+	expected uint
 }
 
 func (m *testHandler) Handle(_ context.Context, msg *sarama.ConsumerMessage) error {
 	args := m.Called(msg.Topic, msg.Value)
 	err := args.Error(0)
 	if err == nil {
-		m.cancelFn()
+		m.expected--
+		if m.expected == 0 {
+			m.cancelFn()
+		}
 	}
 
 	return err
