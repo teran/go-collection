@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/IBM/sarama v1.46.3
-	github.com/labstack/echo/v4 v4.15.0
+	github.com/labstack/echo/v4 v4.15.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.4
