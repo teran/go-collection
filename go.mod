@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
-	github.com/teran/go-docker-testsuite v1.2.1
+	github.com/teran/go-docker-testsuite v1.3.0
 	github.com/tidwall/gjson v1.19.0
 	golang.org/x/sync v0.22.0
 	gopkg.in/yaml.v3 v3.0.1
