@@ -353,6 +353,8 @@ github.com/teran/echo-grpc-server v0.0.4 h1:tMHVi4nX3XJ0ktoDNTTsfQEGT9hB6miGeOjl
 github.com/teran/echo-grpc-server v0.0.4/go.mod h1:8nvZquvu0ks0VrXHbexVjJsci3wXyY4UpWip4iGREBU=
 github.com/teran/go-docker-testsuite v1.2.1 h1:qAyGo1HEtzkU2GYpinrL3fFH/aq2091JJ9Dr2b2Sm58=
 github.com/teran/go-docker-testsuite v1.2.1/go.mod h1:9ZazGxgTARz6oXD+fJ0dMVo1VGbxTm9SS8018H7cmeQ=
+github.com/teran/go-docker-testsuite v1.3.0 h1:EDAAOd13T00qqIv9iETauR7VUoUvvQzcvqOyYqb64eU=
+github.com/teran/go-docker-testsuite v1.3.0/go.mod h1:NEHpP/sXhkPUmKAjcfAH4/9SODPmFoaNZeW2XomHAG4=
 github.com/tidwall/gjson v1.19.0 h1:xwxm7n691Uf3u5OFjzngavjGTh55KX5q/9w9xHW88JU=
 github.com/tidwall/gjson v1.19.0/go.mod h1:V37/opeE/JbLUOfH0QTXiNez2l0RUjYUhpT4szFQAfc=
 github.com/tidwall/match v1.2.0 h1:0pt8FlkOwjN2fPt4bIl4BoNxb98gGHN2ObFEDkrfZnM=
