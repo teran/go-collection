@@ -2,11 +2,18 @@ package handler
 
 import (
 	"context"
+	"math/rand"
 	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	maxRetries       = 3
+	baseRetryDelay   = 1 * time.Second
+	maxRetryDelay    = 30 * time.Second
 )
 
 var (
@@ -65,17 +72,10 @@ func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 					"length":    len(message.Value),
 				}).Debug("message consumed. Running handler ...")
 
-				if err := h.handler.Handle(session.Context(), message); err != nil {
-					if errors.Is(errors.Cause(err), ErrMarkAcked) {
-						log.WithError(err).WithFields(log.Fields{
-							"component": "ConsumerGroupHandler",
-						}).Debug("handler returned ErrMarkAcked. Marking message ...")
-						session.MarkMessage(message, "")
-					}
-
-					log.WithError(err).Error("error running handler. Not marking message")
+				if err := h.handleWithRetry(session, message); err != nil {
 					return errors.Wrap(err, "error running handler")
 				}
+
 				log.WithFields(log.Fields{
 					"component": "ConsumerGroupHandler",
 				}).Debug("handler completed without an error. Marking message ...")
@@ -88,6 +88,56 @@ func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 			return errors.Wrap(err, "error running consumer group handler")
 		}
 	}
+}
+
+func (h *consumerGroupHandler) handleWithRetry(session sarama.ConsumerGroupSession, message *sarama.ConsumerMessage) error {
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		err := h.handler.Handle(session.Context(), message)
+		if err == nil {
+			return nil
+		}
+
+		if errors.Is(errors.Cause(err), ErrMarkAcked) {
+			log.WithError(err).WithFields(log.Fields{
+				"component": "ConsumerGroupHandler",
+				"attempt":   attempt + 1,
+			}).Debug("handler returned ErrMarkAcked. Marking message ...")
+			session.MarkMessage(message, "")
+			return nil
+		}
+
+		if attempt < maxRetries-1 {
+			delay := backoffDelay(attempt)
+			log.WithError(err).WithFields(log.Fields{
+				"component": "ConsumerGroupHandler",
+				"attempt":   attempt + 1,
+				"max_retries": maxRetries,
+				"retry_in":  delay.String(),
+			}).Warning("handler returned error. Retrying ...")
+
+			select {
+			case <-session.Context().Done():
+				return errors.Wrap(session.Context().Err(), "context cancelled during retry")
+			case <-time.After(delay):
+			}
+		}
+	}
+
+	log.WithFields(log.Fields{
+		"component": "ConsumerGroupHandler",
+		"max_retries": maxRetries,
+	}).Error("handler exhausted retries. Not marking message")
+	return errors.Errorf("handler failed after %d attempts", maxRetries)
+}
+
+func backoffDelay(attempt int) time.Duration {
+	delay := baseRetryDelay * (1 << attempt) // 1s, 2s, 4s
+	if delay > maxRetryDelay {
+		delay = maxRetryDelay
+	}
+	// Add jitter: ±25%
+	jitter := time.Duration(float64(delay) * (0.75 + 0.5*rand.Float64()))
+	return jitter
 }
 
 func (h *consumerGroupHandler) Close() error {
