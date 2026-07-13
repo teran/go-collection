@@ -63,7 +63,7 @@ func (m *Mock) Perm(n int) []int {
 }
 
 func (m *Mock) Read(buf []byte) (int, error) {
-	args := m.Called()
+	args := m.Called(buf)
 	outBuf := args.Get(0).([]byte)
-	return copy(buf, outBuf), args.Error(2)
+	return copy(buf, outBuf), args.Error(1)
 }
