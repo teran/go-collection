@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	maxRetries       = 3
-	baseRetryDelay   = 1 * time.Second
-	maxRetryDelay    = 30 * time.Second
+	maxRetries     = 3
+	baseRetryDelay = 1 * time.Second
+	maxRetryDelay  = 30 * time.Second
 )
 
 var (
@@ -109,10 +109,10 @@ func (h *consumerGroupHandler) handleWithRetry(session sarama.ConsumerGroupSessi
 		if attempt < maxRetries-1 {
 			delay := backoffDelay(attempt)
 			log.WithError(err).WithFields(log.Fields{
-				"component": "ConsumerGroupHandler",
-				"attempt":   attempt + 1,
+				"component":   "ConsumerGroupHandler",
+				"attempt":     attempt + 1,
 				"max_retries": maxRetries,
-				"retry_in":  delay.String(),
+				"retry_in":    delay.String(),
 			}).Warning("handler returned error. Retrying ...")
 
 			select {
@@ -124,7 +124,7 @@ func (h *consumerGroupHandler) handleWithRetry(session sarama.ConsumerGroupSessi
 	}
 
 	log.WithFields(log.Fields{
-		"component": "ConsumerGroupHandler",
+		"component":   "ConsumerGroupHandler",
 		"max_retries": maxRetries,
 	}).Error("handler exhausted retries. Not marking message")
 	return errors.Errorf("handler failed after %d attempts", maxRetries)
@@ -136,7 +136,7 @@ func backoffDelay(attempt int) time.Duration {
 		delay = maxRetryDelay
 	}
 	// Add jitter: ±25%
-	jitter := time.Duration(float64(delay) * (0.75 + 0.5*rand.Float64()))
+	jitter := time.Duration(float64(delay) * (0.75 + 0.5*rand.Float64())) //nolint:gosec // jitter doesn't need crypto/rand
 	return jitter
 }
 

@@ -111,6 +111,7 @@ func (s *testSuite) TestHeaders() {
 		Get("/headers").
 		Do(s.ctx, nil)
 	s.Require().NoError(err)
+	defer resp.Body.Close() //nolint:errcheck // defer close idiom
 	s.Require().Equal(http.StatusOK, resp.StatusCode)
 }
 
