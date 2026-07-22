@@ -90,7 +90,11 @@ func (s *handlerTestSuite) TestRoundtrip_ServiceError() {
 		cancelFn: s.cancelFn,
 		expected: 2,
 	}
-	handlerMock.On("Handle", testTopicName, []byte("test #1")).Return(errors.New("blah")).Once()
+	// First message will fail all maxRetries attempts, triggering rebalance.
+	// After rebalance the same message is redelivered and succeeds.
+	for i := 0; i < maxRetries; i++ {
+		handlerMock.On("Handle", testTopicName, []byte("test #1")).Return(errors.New("blah")).Once()
+	}
 	handlerMock.On("Handle", testTopicName, []byte("test #1")).Return(nil).Once()
 	handlerMock.On("Handle", testTopicName, []byte("test #2")).Return(nil).Once()
 	defer handlerMock.AssertExpectations(s.T())

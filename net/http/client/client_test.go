@@ -144,7 +144,7 @@ func TestMisconfigDetection(t *testing.T) {
 	r := require.New(t)
 
 	c := New()
-	_, err := c.Do(context.TODO(), nil)
+	_, err := c.Do(context.TODO(), nil) //nolint:bodyclose // resp is nil on misconfig error
 	r.Error(err)
 	r.Equal(ErrMisconfig, errors.Cause(err))
 }

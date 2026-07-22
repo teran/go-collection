@@ -41,7 +41,7 @@ func (s *downloadFileTestSuite) TestDownloadFile() {
 	s.Require().NoError(err)
 	s.Require().Equal(int64(len(payload)), fi.Size())
 
-	data, err := os.ReadFile(tempFilename)
+	data, err := os.ReadFile(tempFilename) //nolint:gosec // test file: safe path from test setup
 	s.Require().NoError(err)
 	s.Require().Equal(payload, data)
 }
