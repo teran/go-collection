@@ -3,7 +3,7 @@ module github.com/teran/go-collection
 go 1.26.0
 
 require (
-	github.com/IBM/sarama v1.60.0
+	github.com/IBM/sarama v1.60.1
 	github.com/labstack/echo/v4 v4.15.4
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.24.1
