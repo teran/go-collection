@@ -22,7 +22,7 @@ type Random interface {
 }
 
 func init() {
-	rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+	rng = rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec // non-security random strings
 }
 
 func GetRand() Random {
